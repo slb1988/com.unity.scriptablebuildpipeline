@@ -28,7 +28,7 @@ namespace UnityEditor.Build.Pipeline
         /// <summary>
         /// Default compression option to use for all built content files
         /// </summary>
-        public UnityEngine.BuildCompression BundleCompression { get; set; }
+        public BuildCompression BundleCompression { get; set; }
         
         /// <inheritdoc />
         public string OutputFolder { get; set; }
@@ -66,7 +66,7 @@ namespace UnityEditor.Build.Pipeline
             ScriptInfo = null;
             ScriptOptions = ScriptCompilationOptions.None;
 
-            BundleCompression = UnityEngine.BuildCompression.LZMA;
+            BundleCompression = BuildCompression.DefaultLZMA;
 
             OutputFolder = outputFolder;
             TempOutputFolder = ContentPipeline.kTempBuildPath;
@@ -97,7 +97,7 @@ namespace UnityEditor.Build.Pipeline
         }
         
         /// <inheritdoc />
-        public UnityEngine.BuildCompression GetCompressionForIdentifier(string identifier)
+        public BuildCompression GetCompressionForIdentifier(string identifier)
         {
             return BundleCompression;
         }

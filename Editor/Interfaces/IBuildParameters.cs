@@ -60,7 +60,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// </summary>
         /// <param name="identifier">Identifier used to construct the BuildCompression struct.</param>
         /// <returns>Returns the BuildCompression struct to use for a specific identifier.</returns>
-        UnityEngine.BuildCompression GetCompressionForIdentifier(string identifier);
+        BuildCompression GetCompressionForIdentifier(string identifier);
         
         /// <summary>
         /// Constructs and returns the ScriptCompilationSettings struct to use for script compiling.
