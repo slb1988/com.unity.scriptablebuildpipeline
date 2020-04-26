@@ -28,7 +28,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBundleBuildResults>(), tracker, cache);
         }
 
-        static void CalcualteCacheEntry(ResourceFile[] resources, BuildCompression compression, string bundleName, ref CacheEntry cacheEntry)
+        static void CalcualteCacheEntry(ResourceFile[] resources, UnityEngine.BuildCompression compression, string bundleName, ref CacheEntry cacheEntry)
         {
             var fileHashes = new List<string>();
             foreach (ResourceFile resource in resources)
@@ -52,7 +52,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             foreach (KeyValuePair<string, List<WriteResult>> bundle in bundleToResults)
             {
                 ResourceFile[] resourceFiles = bundle.Value.SelectMany(x => x.resourceFiles).ToArray();
-                BuildCompression compression = parameters.GetCompressionForIdentifier(bundle.Key);
+                UnityEngine.BuildCompression compression = parameters.GetCompressionForIdentifier(bundle.Key);
 
                 var details = new BundleDetails();
                 // TODO: Not fond of how caching is handled for archiving, rewrite it
