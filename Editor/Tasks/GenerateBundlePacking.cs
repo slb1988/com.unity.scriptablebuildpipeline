@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Injector;
@@ -10,6 +11,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundlePacking : IBuildTask
     {
+        /// <inheritdoc />
         public int Version { get { return 1; } }
 
 #pragma warning disable 649
@@ -24,16 +26,33 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         [InjectContext(ContextUsage.In)]
         IDeterministicIdentifiers m_PackingMethod;
+
+#if UNITY_2019_3_OR_NEWER
+        [InjectContext(ContextUsage.In, true)]
+        ICustomAssets m_CustomAssets;
+#endif
 #pragma warning restore 649
 
+        static bool ValidAssetBundle(List<GUID> assets, HashSet<GUID> customAssets)
+        {
+            // Custom Valid Asset Bundle function that tests if every asset is known by the asset database, is an asset (not a scene), or is a user driven custom asset
+            return assets.All(x => ValidationMethods.ValidAsset(x) == ValidationMethods.Status.Asset || customAssets.Contains(x));
+        }
+
+        /// <inheritdoc />
         public ReturnCode Run()
         {
             Dictionary<GUID, List<GUID>> assetToReferences = new Dictionary<GUID, List<GUID>>();
+            HashSet<GUID> customAssets = new HashSet<GUID>();
+#if UNITY_2019_3_OR_NEWER
+            if (m_CustomAssets != null)
+                customAssets.UnionWith(m_CustomAssets.Assets);
+#endif
 
             // Pack each asset bundle
             foreach (var bundle in m_BuildContent.BundleLayout)
             {
-                if (ValidationMethods.ValidAssetBundle(bundle.Value))
+                if (ValidAssetBundle(bundle.Value, customAssets))
                     PackAssetBundle(bundle.Key, bundle.Value, assetToReferences);
                 else if (ValidationMethods.ValidSceneBundle(bundle.Value))
                     PackSceneBundle(bundle.Key, bundle.Value, assetToReferences);
@@ -122,7 +141,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             for (int i = references.Count - 1; i >= 0; --i)
             {
                 var reference = references[i];
-                if (reference.filePath == CommonStrings.UnityDefaultResourcePath)
+                if (reference.filePath.Equals(CommonStrings.UnityDefaultResourcePath, StringComparison.OrdinalIgnoreCase))
                 {
                     references.RemoveAt(i);
                     continue; // TODO: Fix this so we can pull these in

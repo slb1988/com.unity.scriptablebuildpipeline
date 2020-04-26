@@ -1,10 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+#if UNITY_2019_3_OR_NEWER
+using UnityEditor.Build.Content;
+#endif
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline
 {
+#if UNITY_2019_3_OR_NEWER
+    /// <summary>
+    /// Basic implementation of ICustomAssets. Stores the list of Custom Assets generated during the Scriptable Build Pipeline.
+    /// <seealso cref="ICustomAssets"/>
+    /// </summary>
+    [Serializable]
+    public class CustomAssets : ICustomAssets
+    {
+        /// <inheritdoc />
+        public List<GUID> Assets { get; private set; }
+
+        /// <summary>
+        /// Default constructor, creates an empty CustomAssets.
+        /// </summary>
+        public CustomAssets()
+        {
+            Assets = new List<GUID>();
+        }
+    }
+#endif
+
     /// <summary>
     /// Basic implementation of IBuildContent. Stores the list of Assets to feed the Scriptable Build Pipeline.
     /// <seealso cref="IBuildContent"/>
@@ -18,7 +42,15 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
 
-        internal BuildContent() { }
+#if UNITY_2019_3_OR_NEWER
+        /// <inheritdoc />
+        public List<CustomContent> CustomAssets { get; private set; }
+#endif
+
+        /// <summary>
+        /// Default constructor, creates an empty BuildContent.
+        /// </summary>
+        public BuildContent() { }
 
         /// <summary>
         /// Default constructor, takes a set of Assets and converts them to the appropriate properties.
@@ -31,6 +63,9 @@ namespace UnityEditor.Build.Pipeline
 
             Assets = new List<GUID>();
             Scenes = new List<GUID>();
+#if UNITY_2019_3_OR_NEWER
+            CustomAssets = new List<CustomContent>();
+#endif
 
             foreach (var asset in assets)
             {
@@ -58,13 +93,24 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
 
+#if UNITY_2019_3_OR_NEWER
+        /// <inheritdoc />
+        public List<CustomContent> CustomAssets { get; private set; }
+
+        /// <inheritdoc />
+        public Dictionary<string, List<ResourceFile>> AdditionalFiles { get; private set; }
+#endif
+
         /// <inheritdoc />
         public Dictionary<GUID, string> Addresses { get; private set; }
 
         /// <inheritdoc />
         public Dictionary<string, List<GUID>> BundleLayout { get; private set; }
 
-        internal BundleBuildContent() { }
+        /// <summary>
+        /// Default constructor, creates an empty BundleBuildContent.
+        /// </summary>
+        public BundleBuildContent() { }
 
         /// <summary>
         /// Default constructor, takes a set of AssetBundleBuild and converts them to the appropriate properties.
@@ -79,6 +125,10 @@ namespace UnityEditor.Build.Pipeline
             Scenes = new List<GUID>();
             Addresses = new Dictionary<GUID, string>();
             BundleLayout = new Dictionary<string, List<GUID>>();
+#if UNITY_2019_3_OR_NEWER
+            CustomAssets = new List<CustomContent>();
+            AdditionalFiles = new Dictionary<string, List<ResourceFile>>();
+#endif
 
             foreach (var bundleBuild in bundleBuilds)
             {

@@ -17,6 +17,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundleCommands : IBuildTask
     {
+        /// <inheritdoc />
         public int Version { get { return 1; } }
 
 #pragma warning disable 649
@@ -31,13 +32,31 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         [InjectContext(ContextUsage.In)]
         IDeterministicIdentifiers m_PackingMethod;
+
+#if UNITY_2019_3_OR_NEWER
+        [InjectContext(ContextUsage.In, true)]
+        ICustomAssets m_CustomAssets;
+#endif
 #pragma warning restore 649
 
+        static bool ValidAssetBundle(List<GUID> assets, HashSet<GUID> customAssets)
+        {
+            // Custom Valid Asset Bundle function that tests if every asset is known by the asset database, is an asset (not a scene), or is a user driven custom asset
+            return assets.All(x => ValidationMethods.ValidAsset(x) == ValidationMethods.Status.Asset || customAssets.Contains(x));
+        }
+
+        /// <inheritdoc />
         public ReturnCode Run()
         {
+            HashSet<GUID> customAssets = new HashSet<GUID>();
+#if UNITY_2019_3_OR_NEWER
+            if (m_CustomAssets != null)
+                customAssets.UnionWith(m_CustomAssets.Assets);
+#endif
+
             foreach (var bundlePair in m_BuildContent.BundleLayout)
             {
-                if (ValidationMethods.ValidAssetBundle(bundlePair.Value))
+                if (ValidAssetBundle(bundlePair.Value, customAssets))
                 {
                     // Use generated internalName here as we could have an empty asset bundle used for raw object storage (See CreateStandardShadersBundle)
                     var internalName = string.Format(CommonStrings.AssetBundleNameFormat, m_PackingMethod.GenerateInternalFileName(bundlePair.Key));
@@ -150,7 +169,8 @@ namespace UnityEditor.Build.Pipeline.Tasks
 #endif
 
             {
-                sbOp.PreloadInfo = new PreloadInfo { preloadObjects = sceneInfo.referencedObjects.Where(x => !fileObjects.Contains(x)).ToList() };
+                var objectSet = new HashSet<ObjectIdentifier>(m_WriteData.FileToObjects[internalName]);
+                sbOp.PreloadInfo = new PreloadInfo { preloadObjects = sceneInfo.referencedObjects.Where(x => !objectSet.Contains(x)).ToList() };
             }
 
             {
@@ -192,8 +212,8 @@ namespace UnityEditor.Build.Pipeline.Tasks
 #endif
 
             {
-                sdOp.PreloadInfo = new PreloadInfo();
-                sdOp.PreloadInfo.preloadObjects = sceneInfo.referencedObjects.Where(x => !fileObjects.Contains(x)).ToList();
+                var objectSet = new HashSet<ObjectIdentifier>(m_WriteData.FileToObjects[internalName]);
+                sdOp.PreloadInfo = new PreloadInfo { preloadObjects = sceneInfo.referencedObjects.Where(x => !objectSet.Contains(x)).ToList() };
             }
 
             m_WriteData.WriteOperations.Add(sdOp);
